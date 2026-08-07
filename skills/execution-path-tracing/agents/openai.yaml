@@ -1,0 +1,7 @@
+interface:
+  display_name: "Execution Path Tracing"
+  short_description: "Trace runtime behavior step by step"
+  default_prompt: "Use $execution-path-tracing to trace this runtime path step by step and identify where state changes hands."
+
+policy:
+  allow_implicit_invocation: true

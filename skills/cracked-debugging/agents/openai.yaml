@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cracked Debugging"
+  short_description: "Diagnose bugs from real runtime paths"
+  default_prompt: "Use $cracked-debugging to trace this bug from entrypoint to symptom and identify the earliest divergence."
+
+policy:
+  allow_implicit_invocation: true

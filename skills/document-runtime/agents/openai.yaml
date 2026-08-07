@@ -1,0 +1,7 @@
+interface:
+  display_name: "Document Runtime"
+  short_description: "Write docs from real runtime paths"
+  default_prompt: "Use $document-runtime to turn this runtime trace into accurate documentation."
+
+policy:
+  allow_implicit_invocation: true
