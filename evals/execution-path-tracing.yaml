@@ -1,0 +1,64 @@
+skill: execution-path-tracing
+
+requires: []
+
+triggers:
+  should_load:
+    - situation: A user asks which components a change to a field's meaning would affect.
+      because: Contract impact analysis needs a real path, not a file listing.
+    - situation: A user asks how a request travels from an HTTP endpoint through a queue to a database write.
+      because: Following a causal runtime path is the core case.
+    - situation: A user asks what should be validated before releasing a change to an event consumer.
+      because: Validation planning is a named use.
+    - situation: A user asks which store actually owns a value that appears in three places.
+      because: Field-authority analysis is a named use.
+
+  should_not_load:
+    - situation: A user reports a specific bug and asks why the failing case behaves differently from the working one.
+      because: Diagnosis needs the normal-versus-failing comparison and divergence analysis of the debugging skill.
+      instead: cracked-debugging
+    - situation: A user asks for a durable explainer to commit to the repository.
+      because: Tracing is the input to that document, not the deliverable.
+      instead: document-runtime
+    - situation: A user asks what a function does, and the answer is contained in that one function.
+      because: A causal multi-hop trace adds nothing over reading the code.
+    - situation: A user asks to list the files in a module.
+      because: A file-by-file summary is explicitly not what this skill produces.
+
+behaviors:
+  - name: Starts from a real entrypoint
+    given: A request to trace how a webhook eventually updates a user-visible status.
+    must:
+      - Begins at an actual registered entrypoint or authoritative state origin.
+      - Advances one real hop at a time rather than jumping to the conclusion.
+    must_not:
+      - Starts from an assumed entrypoint without confirming it is registered.
+
+  - name: Records each hop completely
+    given: A path with four hops including a queue publish and an asynchronous consumer.
+    must:
+      - Records trigger, input or state, handler, side effect or state change, and next handoff for each hop.
+      - Notes error or fallback behavior where it exists.
+    must_not:
+      - Skips the queue boundary or treats the publish and consume as one hop.
+
+  - name: Separates state categories
+    given: A value that is written to a database, cached, and mirrored into a UI store.
+    must:
+      - Classifies each location as authoritative, synchronized, cached, derived, or presentation.
+    must_not:
+      - Treats the cached or UI copy as authoritative.
+
+  - name: Surfaces risk without inventing mechanism
+    given: A handler that catches an exception and returns success.
+    must:
+      - Flags the swallowed failure and what it makes externally invisible.
+    must_not:
+      - Asserts a retry, alert, or compensating write that is not in the code.
+
+  - name: Shapes output for the asked question
+    given: A user asks specifically what to validate before a release.
+    must:
+      - Returns concrete validation steps tied to the traced branches and invariants.
+    must_not:
+      - Returns only a narrative trace with no validation guidance.

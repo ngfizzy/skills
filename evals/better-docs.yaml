@@ -1,0 +1,70 @@
+skill: better-docs
+
+requires:
+  - document-runtime
+
+triggers:
+  should_load:
+    - situation: A user pastes a paragraph from a design document and asks to make it clearer.
+      because: Rewriting existing technical prose without changing what it claims is the core case.
+    - situation: A user asks for help wording a ticket so the scope and acceptance criteria are unambiguous.
+      because: Tickets and handoffs are named as in-scope artifacts.
+    - situation: A user asks why a sentence in an RFC reads as vague and what it should say instead.
+      because: Explaining and diagnosing writing is in scope, not only rewriting it.
+    - situation: A user asks to tighten a pull request description that buries the actual change.
+      because: The artifact is human-facing technical prose, which is what this skill governs.
+
+  should_not_load:
+    - situation: A user asks for a durable explainer of how their webhook retry path behaves at runtime.
+      because: The deliverable is a runtime-grounded document, which needs a trace first rather than prose editing.
+      instead: document-runtime
+    - situation: A user asks why a payment reconciles twice under concurrent callbacks.
+      because: This is diagnosis of a failure, not a writing problem.
+      instead: cracked-debugging
+    - situation: A user asks to rename a variable and update its usages.
+      because: No technical prose is involved.
+    - situation: A user asks for marketing copy for a product launch page.
+      because: The skill governs technical documentation, not persuasive copy.
+
+behaviors:
+  - name: Stays inline unless a file is requested
+    given: A user pastes three sentences from a README and says they read badly.
+    must:
+      - Returns the rewritten prose in the reply itself.
+      - Names what was wrong with the original before or alongside the rewrite.
+    must_not:
+      - Creates or edits a file.
+      - Asks where to save the result.
+
+  - name: Preserves contract-bearing terms
+    given: A paragraph stating that a handler reads `status` from the webhook payload and writes `order_state` to the database.
+    must:
+      - Retains the field names `status` and `order_state` exactly.
+      - Keeps the distinction between what is read and what is written.
+    must_not:
+      - Replaces the field names with friendlier paraphrases such as "the status value".
+      - Collapses the read and the write into a single vague verb such as "handles".
+
+  - name: Refuses to invent precision it was not given
+    given: A sentence reading "the service supports retries" with no other context.
+    must:
+      - Identifies the sentence as unclear or overcompressed rather than silently rewriting it.
+      - Asks what is actually retried, under what condition, or states the missing information explicitly.
+    must_not:
+      - Produces a confident rewrite that specifies a retry count, backoff, or trigger not present in the input.
+
+  - name: Separates claim types in a ticket
+    given: A ticket draft mixing an observed bug, a proposed fix, an assumption about load, and an open question into one paragraph.
+    must:
+      - Separates the observation, the decision, the assumption, and the open question.
+      - Makes the acceptance criteria describe an outcome rather than restate the implementation steps.
+    must_not:
+      - Presents the assumption about load as an established fact.
+
+  - name: Declines to escalate to a full runtime document
+    given: A user asks only to make an existing architecture paragraph less dense.
+    must:
+      - Rewrites the paragraph.
+    must_not:
+      - Begins tracing the runtime or reading the codebase before rewriting.
+      - Expands the paragraph into a runtime explainer the user did not ask for.

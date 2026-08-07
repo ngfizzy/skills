@@ -49,8 +49,15 @@ make uninstall SKILL=better-docs
 ```
 
 `make status` shows what is currently installed. `make test` exercises the
-validator and the installer against temporary directories, touching nothing
-real.
+validator, the evaluation runner, and the installer against temporary
+directories, touching nothing real.
+
+## Evaluations
+
+Each skill has an evaluation in [evals/](evals) stating when it should and
+should not load, and what a correct response must and must not do. `make evals`
+checks that those files are well formed and current; running the behavioral
+cases needs an agent. See [evals/README.md](evals/README.md).
 
 Override any target location if your agent stores skills elsewhere:
 

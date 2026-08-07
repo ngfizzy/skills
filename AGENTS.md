@@ -44,6 +44,12 @@ A skill changes how an agent behaves. It is not a reference manual.
 Cross-references between skills in this repository are allowed and encouraged.
 Do not reference a skill that does not exist here.
 
+Every skill carries an evaluation in `evals/`, named after it. A new skill is
+not complete without one. The evaluation must state at least two situations
+where the skill should load and at least two nearby situations where it should
+not — the negative cases are the ones that carry the information, since the
+risk is a skill claiming a neighbor's work. See `evals/README.md`.
+
 ## Adapting rather than forking
 
 When a skill is nearly right but needs detail specific to an organization,
@@ -67,7 +73,9 @@ Skills are installed and relied upon. Before proposing a change:
    distinction is not.
 3. Consider how an agent already following the current version would behave
    differently, and say so in the change description.
-4. Run `make check` and `make test`.
+4. Update the skill's evaluation in the same change. An evaluation describing
+   the previous version is worse than none, because it will pass.
+5. Run `make check` and `make test`.
 
 Renaming a skill changes its installed path and silently strands the old copy
 on every machine that installed it. Treat a rename as a breaking change and say

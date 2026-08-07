@@ -1,0 +1,67 @@
+skill: document-runtime
+
+requires:
+  - execution-path-tracing
+  - cracked-debugging
+
+triggers:
+  should_load:
+    - situation: A user asks for a document explaining how a background job moves an order through its states.
+      because: A durable explainer grounded in real behavior is the core case.
+    - situation: A user asks what a field actually means, where it originates, and which consumers depend on it.
+      because: Field notes with source-of-truth and consumer analysis are a named output form.
+    - situation: A user asks for an onboarding overview of a service that new engineers keep misreading.
+      because: A runtime overview is a named output form.
+    - situation: A user asks for a sequence diagram of the real request path through their auth layer.
+      because: Diagram-backed runtime documentation is in scope when it clarifies behavior.
+
+  should_not_load:
+    - situation: A user asks for a specification for a feature that has not been built.
+      because: There is no runtime to trace; the skill is explicitly not for future implementation specs.
+    - situation: A user asks for a summary of what changed in a pull request.
+      because: Diff summaries are explicitly out of scope.
+    - situation: A user asks to make an existing paragraph read more clearly.
+      because: This is a prose problem, not a documentation-from-behavior problem.
+      instead: better-docs
+    - situation: A user reports that a queue consumer silently drops messages and asks why.
+      because: The goal is diagnosis, not explanation.
+      instead: cracked-debugging
+
+behaviors:
+  - name: Traces before writing
+    given: A request to document how a payment webhook updates order state, with the repository available.
+    must:
+      - Inspects the entrypoint, handler, and persistence boundary before producing prose.
+      - Grounds each claim about behavior in code, a contract, or an observed payload.
+    must_not:
+      - Describes the intended design as though it were observed behavior.
+
+  - name: Marks unknowns instead of filling them
+    given: A path where one hop calls an external service whose response handling is not visible in the repository.
+    must:
+      - States explicitly that the external response handling is unknown.
+      - Says what evidence would resolve it.
+    must_not:
+      - Invents a plausible response shape, retry policy, or error branch.
+
+  - name: Distinguishes authoritative from derived state
+    given: A screen showing an order status that is computed from a cached projection rather than the order record.
+    must:
+      - Identifies which store holds the authoritative value.
+      - Labels the displayed value as derived or presentation state.
+    must_not:
+      - Presents the rendered value as the source of truth.
+
+  - name: Chooses the narrowest useful form
+    given: A user asks what a single field means and where it comes from.
+    must:
+      - Produces a field note covering meaning, source of truth, transformations, and consumers.
+    must_not:
+      - Produces a full architectural overview of the surrounding service.
+
+  - name: Asks about destination when it is material
+    given: A request for a durable document in a repository with no established documentation location.
+    must:
+      - Asks where the document should live, or states the chosen location and why.
+    must_not:
+      - Writes the file to an arbitrary path without saying so.

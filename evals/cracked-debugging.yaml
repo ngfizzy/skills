@@ -1,0 +1,70 @@
+skill: cracked-debugging
+
+requires:
+  - execution-path-tracing
+
+triggers:
+  should_load:
+    - situation: A user reports that a status shows as paid in the interface while the database still reads pending.
+      because: An authority-versus-UI mismatch is a named case.
+    - situation: A user reports that a webhook occasionally produces a duplicate record and cannot reproduce it reliably.
+      because: Cross-component timing failures are a named case.
+    - situation: A user reports that an SDK callback fires but the resulting state update never lands.
+      because: Callback and async-state failures are a named case.
+    - situation: A user says a feature works locally and fails in staging with no error surfaced.
+      because: The failure is unclear and needs a normal-versus-failing comparison.
+
+  should_not_load:
+    - situation: A stack trace names the failing line and the cause is a null check that is plainly missing.
+      because: The bug is already located; a full divergence analysis adds nothing.
+    - situation: A user asks which components a contract change would affect.
+      because: Nothing is failing; this is impact scoping.
+      instead: execution-path-tracing
+    - situation: A user asks for documentation of how the retry path behaves.
+      because: The goal is explanation, not diagnosis.
+      instead: document-runtime
+    - situation: A test fails because its fixture was not updated after a rename.
+      because: The cause is evident from the test output without runtime tracing.
+
+behaviors:
+  - name: Diagnoses before changing anything
+    given: A reported bug in a repository the agent can edit, with no explicit request to fix it.
+    must:
+      - Produces a diagnosis and stops.
+      - States the smallest viable fix point without applying it.
+    must_not:
+      - Edits source files.
+      - Applies a speculative fix to see whether the symptom disappears.
+
+  - name: Compares the working and failing paths
+    given: A flow that succeeds for one payload shape and fails for another.
+    must:
+      - Traces both paths.
+      - Names the earliest hop at which they diverge.
+    must_not:
+      - Reports the first suspicious line encountered as the cause.
+      - Reports only the point where the error surfaced, when it diverged earlier.
+
+  - name: Treats rendered state as non-authoritative
+    given: A screenshot showing a success message alongside a report that the record was never written.
+    must:
+      - Treats the rendered success as presentation state until code or contracts prove otherwise.
+      - Checks the write path rather than trusting the message.
+    must_not:
+      - Concludes the write succeeded because the interface said so.
+
+  - name: Classifies the divergence
+    given: An identified divergence where a consumer reads a value before the producer commits it.
+    must:
+      - Classifies it explicitly, here as timing or state ownership.
+      - Names the adjacent layers that should remain unchanged.
+    must_not:
+      - Proposes changes across several layers at once without identifying the narrowest point.
+
+  - name: States unknowns and what would resolve them
+    given: A failure whose cause depends on a third-party delivery guarantee not visible in the repository.
+    must:
+      - Marks the guarantee as unknown.
+      - Names the evidence, log, or payload that would settle it.
+    must_not:
+      - Assumes at-least-once or exactly-once delivery without evidence.
