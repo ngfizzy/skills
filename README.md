@@ -19,6 +19,8 @@ execute, no network calls, and no configuration for any particular repository.
   rather than intended design.
 - **`better-docs`** — making technical writing direct and precise without
   weakening what it claims.
+- **`say-what`** — re-explaining something you just said, after the first
+  explanation did not land.
 
 They compose. `better-docs` and `document-runtime` both build on a trace
 established by `execution-path-tracing`, so installing all four gives each one

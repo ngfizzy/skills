@@ -1,0 +1,76 @@
+skill: say-what
+
+requires:
+  - better-docs
+
+triggers:
+  should_load:
+    - situation: After a long technical answer, the user replies only "huh?".
+      because: A bare confusion signal about the previous turn is the core case.
+    - situation: The user replies "that's a mouthful" to an explanation just given.
+      because: The complaint is about the explanation's density, not its content.
+    - situation: The user asks "can you say that again more simply?".
+      because: An explicit request to re-explain the previous turn.
+    - situation: The user says "I don't follow — what do you mean by authoritative state here?".
+      because: The confusion is localized to one term in what was just said.
+
+  should_not_load:
+    - situation: The user pastes a paragraph from their own design document and asks to make it clearer.
+      because: The text is theirs, not the agent's previous turn, so this is ordinary prose editing.
+      instead: better-docs
+    - situation: The user asks what a particular function in the codebase does.
+      because: This is a new question, not a failed explanation being retried.
+    - situation: After an explanation the user asks "and what happens if the retry fails?".
+      because: A follow-up that extends scope is not a signal of confusion; answer it.
+    - situation: The user asks for a simplified explainer to commit to the repository.
+      because: The deliverable is a durable document grounded in real behavior.
+      instead: document-runtime
+
+behaviors:
+  - name: Cuts when the problem was length
+    given: The user replies "too long" to a correct six-paragraph answer.
+    must:
+      - Returns a substantially shorter answer.
+      - Leads with the single most important claim in the first sentence.
+    must_not:
+      - Returns a response as long as or longer than the original.
+      - Rewords the original at the same length without cutting it.
+
+  - name: Keeps contract-bearing terms and defines them
+    given: The user says they do not understand an explanation that turned on the field `order_state`.
+    must:
+      - Retains the name `order_state`.
+      - Explains what it holds and who writes it.
+    must_not:
+      - Replaces it with an informal paraphrase such as "the order's situation".
+
+  - name: Changes framing rather than repeating
+    given: The user says "still not following" after a first simplification attempt.
+    must:
+      - Approaches the point differently, for example through a concrete example, a comparison, or a narrower scope.
+    must_not:
+      - Restates the previous attempt with minor wording changes.
+      - Adds more detail on top of the explanation that already failed.
+
+  - name: Does not manufacture certainty
+    given: The original explanation said a cause was likely but unconfirmed.
+    must:
+      - Keeps the claim hedged in the simpler version.
+    must_not:
+      - States the unconfirmed cause as established fact in the name of simplicity.
+
+  - name: No preamble, no restatement, no condescension
+    given: Any request to re-explain.
+    must:
+      - Begins with the explanation itself.
+    must_not:
+      - Opens with an apology or a note that it is simplifying.
+      - Appends the original explanation after the simpler one.
+      - Uses phrasing that treats the user as inexpert rather than the wording as unclear.
+
+  - name: Asks which part when the signal is ambiguous
+    given: A bare "what?" following an answer that covered four unrelated points.
+    must:
+      - Asks which of the points to expand, or picks one and says which it chose.
+    must_not:
+      - Re-explains all four points in full.
