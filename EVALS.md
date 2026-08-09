@@ -32,6 +32,11 @@ catches that.
 These need an agent, and they are read as a rubric rather than scored
 automatically.
 
+`make evals-list` prints every case as a checklist — what to say, which
+direction to expect, and each assertion on its own line — so a pass can be
+worked through without opening the files. `make evals-list SKILL=<name>`
+narrows it to one skill.
+
 For a trigger case, start a fresh session with the skills installed, give the
 agent the `situation` verbatim as the user turn, and record which skills it
 loaded. A `should_load` case passes when the named skill loads. A

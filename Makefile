@@ -13,12 +13,14 @@ SELECTED_SKILLS := $(if $(SKILL),$(SKILL),$(AVAILABLE_SKILLS))
 TARGETS := $(CODEX_SKILLS_DIR) $(COPILOT_SKILLS_DIR) $(CLAUDE_SKILLS_DIR) $(ANTIGRAVITY_SKILLS_DIR)
 
 .DEFAULT_GOAL := help
-.PHONY: help check evals test install uninstall status install-all-targets install-target validate-installed-skills
+.PHONY: help check evals evals-list test install uninstall status install-all-targets install-target validate-installed-skills
 
 help:
 	@printf '%s\n' \
 	  'make check                  Validate the skill layout in this repository.' \
-	  'make evals                  Validate the evaluation files under evals/.' \
+	  'make evals                  Validate every skill'"'"'s eval.yaml.' \
+	  'make evals-list             Print evaluation cases as a manual checklist.' \
+	  'make evals-list SKILL=<n>   Print one skill'"'"'s evaluation cases.' \
 	  'make test                   Run the validator, evaluation, and installer tests.' \
 	  'make install                Install every skill for all supported agents.' \
 	  'make install SKILL=<name>   Install one skill for all supported agents.' \
@@ -39,9 +41,13 @@ check:
 evals:
 	@$(RUBY) scripts/run-evals.rb
 
+evals-list:
+	@$(RUBY) scripts/list-evals.rb $(if $(SKILL),--skill $(SKILL))
+
 test:
 	@$(RUBY) tests/validate-skills-test.rb
 	@$(RUBY) tests/run-evals-test.rb
+	@$(RUBY) tests/list-evals-test.rb
 	@$(RUBY) tests/install-test.rb
 	@$(MAKE) --no-print-directory evals
 
