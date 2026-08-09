@@ -65,6 +65,19 @@ Dir.mktmpdir("skills-install-test") do |temporary_root|
     assert(File.file?(File.join(target, "unrelated", "keep.txt")), "unrelated entries were not preserved")
   end
 
+  # Evaluations sit beside their skill so they travel with it, but they are
+  # development material and must never reach an install root: their assertions
+  # are phrased as instructions an agent could act on.
+  assert(
+    REPOSITORY_SKILLS.any? { |skill| File.file?(File.join(ROOT, "skills", skill, "eval.yaml")) },
+    "no skill has an eval.yaml, so this test cannot prove the installer strips it"
+  )
+  install_targets.each do |target|
+    REPOSITORY_SKILLS.each do |skill|
+      assert(!File.exist?(File.join(target, skill, "eval.yaml")), "#{skill} evaluation was installed into #{target}")
+    end
+  end
+
   # Reinstalling replaces the skill directory rather than merging into it, so
   # files removed upstream do not survive in an installed copy.
   install_targets.each { |target| File.write(File.join(target, sample_skill, "stale.txt"), "stale") }

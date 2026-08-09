@@ -58,6 +58,11 @@ install-all-targets:
 # Each skill is copied into a staging directory and swapped into place only
 # after the copy succeeds, so a failed install never leaves a partial skill
 # behind and never disturbs unrelated entries in the target directory.
+#
+# eval.yaml is removed from the staging copy before the swap. Evaluations live
+# beside their skill so they move with it, but they are development material,
+# not runtime material: their assertions are phrased as instructions and an
+# agent reading the installed directory could act on them.
 install-target:
 	@set -eu; \
 	install_target="$(TARGET)"; \
@@ -67,6 +72,7 @@ install-target:
 	  rm -rf "$$staging"; \
 	  mkdir -p "$$staging"; \
 	  if ! $(COPY) -R "skills/$$skill/." "$$staging/"; then rm -rf "$$staging"; exit 1; fi; \
+	  rm -f "$$staging/eval.yaml"; \
 	  rm -rf "$$install_target/$$skill"; \
 	  mv "$$staging" "$$install_target/$$skill"; \
 	done; \

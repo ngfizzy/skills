@@ -54,10 +54,10 @@ directories, touching nothing real.
 
 ## Evaluations
 
-Each skill has an evaluation in [evals/](evals) stating when it should and
+Each skill carries an evaluation in its own directory stating when it should and
 should not load, and what a correct response must and must not do. `make evals`
 checks that those files are well formed and current; running the behavioral
-cases needs an agent. See [evals/README.md](evals/README.md).
+cases needs an agent, and they are never installed. See [EVALS.md](EVALS.md).
 
 Override any target location if your agent stores skills elsewhere:
 

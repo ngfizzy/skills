@@ -1,26 +1,30 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Validates the evaluation files under evals/.
+# Validates the eval.yaml file inside each skill directory.
 #
 # These checks are structural and offline. They confirm that every skill has an
 # evaluation, that it discriminates in both directions, that its declared
 # dependencies are real, and that its behavioral cases are stated in checkable
 # terms. They do not run an agent, so they cannot tell you whether a skill
 # actually triggers or behaves correctly. Executing the behavioral cases needs
-# an agent; see evals/README.md.
+# an agent; see EVALS.md.
 
 require "yaml"
 
 # Defaults to this repository. An explicit root keeps the tests off the real tree.
 ROOT = ARGV[0] ? File.expand_path(ARGV[0]) : File.expand_path("..", __dir__)
 SKILLS_DIR = File.join(ROOT, "skills")
-EVALS_DIR = File.join(ROOT, "evals")
 
+EVAL_FILENAME = "eval.yaml"
 MINIMUM_TRIGGERS_PER_DIRECTION = 2
 
 def skill_names
   Dir.children(SKILLS_DIR).select { |entry| File.file?(File.join(SKILLS_DIR, entry, "SKILL.md")) }.sort
+end
+
+def eval_path(skill)
+  File.join(SKILLS_DIR, skill, EVAL_FILENAME)
 end
 
 def non_empty_string?(value)
@@ -113,32 +117,36 @@ end
 known_skills = skill_names
 abort("No skills found under #{SKILLS_DIR}") if known_skills.empty?
 
-eval_files = Dir.glob(File.join(EVALS_DIR, "*.yaml")).sort
-evaluated = eval_files.map { |path| File.basename(path, ".yaml") }
-
 failures = []
 behavior_count = 0
+evaluated = 0
 
-(known_skills - evaluated).each { |skill| failures << "#{skill}: no evaluation file at evals/#{skill}.yaml" }
-(evaluated - known_skills).each { |name| failures << "evals/#{name}.yaml does not correspond to any skill" }
+known_skills.each do |skill|
+  path = eval_path(skill)
+  unless File.file?(path)
+    failures << "#{skill}: no evaluation at skills/#{skill}/#{EVAL_FILENAME}"
+    next
+  end
 
-eval_files.each do |path|
-  name = File.basename(path, ".yaml")
   errors = []
 
   begin
     document = YAML.safe_load(File.read(path, encoding: "UTF-8"), aliases: false)
   rescue Psych::SyntaxError => error
-    failures << "evals/#{name}.yaml has invalid YAML: #{error.message.lines.first.strip}"
+    failures << "skills/#{skill}/#{EVAL_FILENAME} has invalid YAML: #{error.message.lines.first.strip}"
     next
   end
 
   unless document.is_a?(Hash)
-    failures << "evals/#{name}.yaml must be a mapping"
+    failures << "skills/#{skill}/#{EVAL_FILENAME} must be a mapping"
     next
   end
 
-  errors << "skill must be #{name.inspect}, got #{document['skill'].inspect}" unless document["skill"] == name
+  evaluated += 1
+
+  # Redundant with the path, but it catches an evaluation copied into another
+  # skill's directory without being updated.
+  errors << "skill must be #{skill.inspect}, got #{document['skill'].inspect}" unless document["skill"] == skill
 
   triggers = document["triggers"]
   if triggers.is_a?(Hash)
@@ -151,11 +159,9 @@ eval_files.each do |path|
   check_behaviors(errors, document["behaviors"])
   behavior_count += document["behaviors"].length if document["behaviors"].is_a?(Array)
 
-  if known_skills.include?(name)
-    check_requires(errors, name, string_list(document["requires"]), known_skills)
-  end
+  check_requires(errors, skill, string_list(document["requires"]), known_skills)
 
-  errors.each { |error| failures << "evals/#{name}.yaml: #{error}" }
+  errors.each { |error| failures << "skills/#{skill}/#{EVAL_FILENAME}: #{error}" }
 end
 
 unless failures.empty?
@@ -163,5 +169,5 @@ unless failures.empty?
   exit 1
 end
 
-puts "Evaluations are well formed: #{evaluated.length} skill(s), #{behavior_count} behavioral case(s)."
-puts "Structural checks only. Run the behavioral cases with an agent; see evals/README.md."
+puts "Evaluations are well formed: #{evaluated} skill(s), #{behavior_count} behavioral case(s)."
+puts "Structural checks only. Run the behavioral cases with an agent; see EVALS.md."

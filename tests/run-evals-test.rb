@@ -4,6 +4,7 @@
 require "fileutils"
 require "open3"
 require "tmpdir"
+require "yaml"
 
 ROOT = File.expand_path("..", __dir__)
 RUNNER = File.join(ROOT, "scripts", "run-evals.rb")
@@ -48,27 +49,21 @@ def evaluation(skill:, requires: [], should_load: 2, should_not_load: 2, instead
   document
 end
 
+# Evaluations live inside the skill directory so they travel with it.
 def write_evaluation(root, name, document)
-  FileUtils.mkdir_p(File.join(root, "evals"))
-  File.write(File.join(root, "evals", "#{name}.yaml"), YAML.dump(document))
+  File.write(File.join(root, "skills", name, "eval.yaml"), YAML.dump(document))
 end
 
-require "yaml"
-
-def build_repository(root, &block)
+def build(temporary_root, name)
+  root = File.join(temporary_root, name)
   FileUtils.mkdir_p(File.join(root, "skills"))
-  FileUtils.mkdir_p(File.join(root, "evals"))
-  block.call(root)
+  yield root
   root
-end
-
-def case_root(temporary_root, name)
-  File.join(temporary_root, name)
 end
 
 Dir.mktmpdir("skills-evals-test") do |temporary_root|
   # Baseline: a well-formed repository passes.
-  baseline = build_repository(case_root(temporary_root, "baseline")) do |root|
+  baseline = build(temporary_root, "baseline") do |root|
     write_skill(root, "alpha")
     write_evaluation(root, "alpha", evaluation(skill: "alpha"))
   end
@@ -77,7 +72,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(output.include?("1 skill(s)"), "runner did not report the skill count:\n#{output}")
 
   # A skill with no evaluation fails.
-  missing = build_repository(case_root(temporary_root, "missing")) do |root|
+  missing = build(temporary_root, "missing") do |root|
     write_skill(root, "alpha")
     write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha"))
@@ -86,17 +81,19 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(!missing_passed, "a skill without an evaluation was accepted")
   assert(missing_output.include?("beta"), "the failure did not name the unevaluated skill")
 
-  # An evaluation with no skill fails.
-  orphan = build_repository(case_root(temporary_root, "orphan")) do |root|
+  # An evaluation copied into the wrong skill directory fails.
+  misplaced = build(temporary_root, "misplaced") do |root|
     write_skill(root, "alpha")
+    write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha"))
-    write_evaluation(root, "ghost", evaluation(skill: "ghost"))
+    write_evaluation(root, "beta", evaluation(skill: "alpha"))
   end
-  orphan_passed, = run_runner(orphan)
-  assert(!orphan_passed, "an evaluation without a skill was accepted")
+  misplaced_passed, misplaced_output = run_runner(misplaced)
+  assert(!misplaced_passed, "an evaluation naming the wrong skill was accepted")
+  assert(misplaced_output.include?("skill must be"), "the misplaced evaluation was not explained")
 
   # Triggers must discriminate in both directions.
-  one_sided = build_repository(case_root(temporary_root, "one-sided")) do |root|
+  one_sided = build(temporary_root, "one-sided") do |root|
     write_skill(root, "alpha")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", should_not_load: 1))
   end
@@ -105,7 +102,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(one_sided_output.include?("should_not_load"), "the failure did not name the thin direction")
 
   # A redirect must name a real skill.
-  bad_redirect = build_repository(case_root(temporary_root, "bad-redirect")) do |root|
+  bad_redirect = build(temporary_root, "bad-redirect") do |root|
     write_skill(root, "alpha")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", instead: "nonexistent"))
   end
@@ -113,7 +110,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(!bad_redirect_passed, "a redirect to an unknown skill was accepted")
 
   # A declared dependency the skill never mentions fails.
-  stale_requires = build_repository(case_root(temporary_root, "stale-requires")) do |root|
+  stale_requires = build(temporary_root, "stale-requires") do |root|
     write_skill(root, "alpha")
     write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", requires: ["beta"]))
@@ -124,7 +121,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(stale_output.include?("never mentions"), "the failure did not explain the stale dependency")
 
   # A mentioned sibling the evaluation does not declare fails.
-  undeclared = build_repository(case_root(temporary_root, "undeclared")) do |root|
+  undeclared = build(temporary_root, "undeclared") do |root|
     write_skill(root, "alpha", body: "Use `beta` first.")
     write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha"))
@@ -135,7 +132,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(undeclared_output.include?("does not require"), "the failure did not explain the undeclared reference")
 
   # A satisfied dependency in both directions passes.
-  consistent = build_repository(case_root(temporary_root, "consistent")) do |root|
+  consistent = build(temporary_root, "consistent") do |root|
     write_skill(root, "alpha", body: "Use `beta` first.")
     write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", requires: ["beta"]))
@@ -145,7 +142,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(consistent_passed, "a consistent cross-reference was rejected:\n#{consistent_output}")
 
   # Non-ASCII skill and evaluation text is read as UTF-8 regardless of locale.
-  unicode = build_repository(case_root(temporary_root, "unicode")) do |root|
+  unicode = build(temporary_root, "unicode") do |root|
     write_skill(root, "alpha", body: "Avoid vague labels such as “handling” — use `beta` instead.")
     write_skill(root, "beta")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", requires: ["beta"]))
@@ -155,7 +152,7 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(unicode_passed, "non-ASCII skill text was rejected:\n#{unicode_output}")
 
   # A behavioral case with no assertion fails.
-  assertionless = build_repository(case_root(temporary_root, "assertionless")) do |root|
+  assertionless = build(temporary_root, "assertionless") do |root|
     write_skill(root, "alpha")
     write_evaluation(root, "alpha", evaluation(skill: "alpha", must: 0))
   end
@@ -163,9 +160,9 @@ Dir.mktmpdir("skills-evals-test") do |temporary_root|
   assert(!assertionless_passed, "a behavioral case with no assertion was accepted")
 
   # Invalid YAML fails without raising.
-  broken = build_repository(case_root(temporary_root, "broken")) do |root|
+  broken = build(temporary_root, "broken") do |root|
     write_skill(root, "alpha")
-    File.write(File.join(root, "evals", "alpha.yaml"), "skill: alpha\ntriggers: [unclosed\n")
+    File.write(File.join(root, "skills", "alpha", "eval.yaml"), "skill: alpha\ntriggers: [unclosed\n")
   end
   broken_passed, broken_output = run_runner(broken)
   assert(!broken_passed, "invalid YAML was accepted")

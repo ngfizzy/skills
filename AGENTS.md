@@ -44,11 +44,15 @@ A skill changes how an agent behaves. It is not a reference manual.
 Cross-references between skills in this repository are allowed and encouraged.
 Do not reference a skill that does not exist here.
 
-Every skill carries an evaluation in `evals/`, named after it. A new skill is
-not complete without one. The evaluation must state at least two situations
-where the skill should load and at least two nearby situations where it should
-not — the negative cases are the ones that carry the information, since the
-risk is a skill claiming a neighbor's work. See `evals/README.md`.
+Every skill carries an `eval.yaml` beside its `SKILL.md`, and a new skill is
+not complete without one. It must state at least two situations where the skill
+should load and at least two nearby situations where it should not — the
+negative cases carry the information, since the risk is a skill claiming a
+neighbor's work.
+
+Evaluations live inside the skill directory so they travel with it, and the
+installer strips them: they are development material, and their assertions are
+phrased as instructions an agent could act on. See `EVALS.md`.
 
 ## Adapting rather than forking
 

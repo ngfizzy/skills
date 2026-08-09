@@ -1,13 +1,20 @@
 # Evaluations
 
-One file per skill, named after it. Each file states when the skill should and
-should not load, and what a correct response must and must not do.
+Each skill carries an `eval.yaml` beside its `SKILL.md`. It states when the
+skill should and should not load, and what a correct response must and must
+not do.
+
+They sit inside the skill directory so they move with it — a skill is copied
+between repositories as a whole directory, and an evaluation kept somewhere
+else is a second thing to remember. The installer strips `eval.yaml` before a
+skill reaches an agent, because an evaluation is development material and its
+assertions are phrased as instructions an agent could act on.
 
 ## What is checked automatically
 
 `make evals` validates structure only, offline:
 
-- every skill has an evaluation, and every evaluation names a real skill;
+- every skill has an evaluation, and it names the skill it sits beside;
 - triggers discriminate in both directions, with at least two cases each;
 - every redirect in `instead` names a skill that exists here;
 - `requires` matches the skill body in both directions — a declared dependency
@@ -43,7 +50,7 @@ gets loaded later, which is exactly what a trigger case is trying to measure.
 ## Format
 
 ```yaml
-skill: <name matching the filename>
+skill: <name of the skill directory this file sits in>
 
 requires:            # sibling skills this skill references, may be empty
   - <skill-name>
