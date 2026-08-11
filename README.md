@@ -38,6 +38,25 @@ for Codex, Copilot, Claude, and Antigravity. It replaces only directories whose
 names match a skill in this repository, so built-in and third-party skills in
 those locations are left alone.
 
+The default install writes to all four locations, creating a location if it
+does not already exist:
+
+| Agent | Default location | Override |
+| --- | --- | --- |
+| Codex | `~/.codex/skills` | `CODEX_SKILLS_DIR` |
+| Copilot | `~/.copilot/skills` | `COPILOT_SKILLS_DIR` |
+| Claude | `~/.claude/skills` | `CLAUDE_SKILLS_DIR` |
+| Antigravity | `~/.gemini/skills` | `ANTIGRAVITY_SKILLS_DIR` |
+
+For example, use temporary or custom locations without touching the defaults:
+
+```sh
+make install CODEX_SKILLS_DIR=/path/to/codex-skills \
+  COPILOT_SKILLS_DIR=/path/to/copilot-skills \
+  CLAUDE_SKILLS_DIR=/path/to/claude-skills \
+  ANTIGRAVITY_SKILLS_DIR=/path/to/antigravity-skills
+```
+
 Install a single skill:
 
 ```sh
