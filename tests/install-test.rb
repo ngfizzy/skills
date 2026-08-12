@@ -55,13 +55,19 @@ Dir.mktmpdir("skills-install-test") do |temporary_root|
   install_environment = test_environment(File.join(temporary_root, "install"))
   install_targets = install_environment.values_at(*TARGET_VARIABLES.keys)
   install_targets.each { |target| seed_target(target) }
+  missing_target = install_environment.fetch("ANTIGRAVITY_SKILLS_DIR")
+  FileUtils.rm_rf(missing_target)
+  assert(!File.exist?(missing_target), "missing-target fixture was not removed")
 
   installed, output = run_make(install_environment, "install")
   assert(installed, "install failed:\n#{output}")
+  assert(File.directory?(missing_target), "install did not create the missing target directory")
   install_targets.each do |target|
     REPOSITORY_SKILLS.each do |skill|
       assert(File.file?(File.join(target, skill, "SKILL.md")), "#{skill} was not installed into #{target}")
     end
+    next if target == missing_target
+
     assert(File.file?(File.join(target, "unrelated", "keep.txt")), "unrelated entries were not preserved")
   end
 
