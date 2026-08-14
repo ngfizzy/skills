@@ -1,6 +1,6 @@
-# ngfizzy Agent Skills
+# I'm Fizzy
 
-[![ngfizzy skills](https://img.shields.io/badge/ngfizzy-skills-6f42c1)](skills/)
+[![I'm Fizzy](https://img.shields.io/badge/I%27m-Fizzy-6f42c1)](skills/)
 
 Personal agent skills, shared for anyone to use.
 
