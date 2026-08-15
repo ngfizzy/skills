@@ -4,6 +4,14 @@ This repository holds portable agent skills. Each direct child of `skills/` is
 one installable skill and must contain `SKILL.md`. Use the Makefile for
 validation and installation; do not add or remove installed copies by hand.
 
+## Directory Map
+
+| Directory | Purpose |
+| --- | --- |
+| `skills/` | Public skills; each child contains `SKILL.md` and `eval.yaml`. |
+| `scripts/` | Repository maintenance and validation helpers. |
+| `tests/` | Repository-level tests. |
+
 ## Content boundary
 
 A skill here must be useful to someone with no knowledge of the person or
