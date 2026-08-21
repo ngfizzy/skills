@@ -1,0 +1,94 @@
+skill: session-coordinator
+
+requires: []
+
+triggers:
+  should_load:
+    - situation: A user explicitly invokes the session coordinator with a bounded task and asks it to delegate the work through a native session.
+      because: Explicit delegation with coordinator accountability is the skill's core case.
+    - situation: A user asks the coordinator to replace a degraded worker while preserving verified context, artifacts, and the next action.
+      because: Lifecycle recovery and context-preserving replacement are named responsibilities.
+    - situation: A user explicitly asks the coordinator to choose a fallback when native session creation is unavailable.
+      because: The consent-gated fallback path is part of the skill's invocation contract.
+
+  should_not_load:
+    - situation: A user asks for a direct implementation in a repository and does not explicitly invoke a coordinator or request delegation.
+      because: The skill is disabled for implicit matching requests.
+    - situation: A user asks for a diagnosis of an unclear runtime failure before any delegation decision is made.
+      because: Failure diagnosis is a task-specific concern rather than coordination.
+    - situation: A user asks for a prose rewrite without asking for delegation, lifecycle management, or a worker.
+      because: Editing prose alone does not require coordinator behavior.
+    - situation: A user asks for a durable runtime explainer and wants the agent to trace the source directly.
+      because: The deliverable and investigation belong to a runtime-documentation workflow unless delegation is explicitly requested.
+
+behaviors:
+  - name: Bare invocation stays inert
+    given: The user explicitly invokes the session coordinator with no task, configuration, or question.
+    must:
+      - Acknowledges coordinator mode only.
+      - Asks no question and starts or reuses no worker.
+      - Performs no task-specific investigation.
+
+  - name: Native session comes before task work
+    given: The user explicitly requests a deep task that requires source inspection, testing, and writing while a healthy native session capability is exposed.
+    must:
+      - Discovers the documented native capabilities before task-specific investigation.
+      - Creates or reuses the related native session before inspecting task sources.
+      - Delegates the complete task boundary with acceptance criteria and evidence requirements.
+    must_not:
+      - Investigates or writes the task itself before the delegated session is ready.
+
+  - name: Default and override selection are validated
+    given: The user invokes the coordinator once without overrides and once with an unsupported model and reasoning combination.
+    must:
+      - Uses the documented default pair when no override is supplied.
+      - Validates the complete override pair against discovered capabilities.
+      - Rejects an unsupported pair without substituting another model or reasoning level.
+      - Keeps a supported override limited to its invocation and restores the default later.
+
+  - name: Fallback requires consent and preserves scope
+    given: Native session creation is unavailable, a named alternative is recommended, and the user has not yet approved it.
+    must:
+      - Stops task execution and explains the material limitations of the named alternative.
+      - Requests explicit permission before starting the alternative.
+      - Starts only the approved alternative and preserves the original boundary after approval.
+    must_not:
+      - Treats silence, a general task request, or the coordinator's preference as fallback approval.
+
+  - name: Degraded work receives a context-preserving handoff
+    given: A worker repeatedly loses context, contradicts verified facts, and misses acceptance criteria while a replacement native session is available.
+    must:
+      - Treats the worker as degraded rather than restarting from an empty context.
+      - Preserves verified facts, artifacts, validation, risks, and incomplete criteria.
+      - Gives the replacement one exact next action and supersedes the old worker through its recorded identity.
+
+  - name: Scope and evidence gates remain enforced
+    given: A worker reports completion and proposes a commit or destructive action outside the explicitly delegated boundary.
+    must:
+      - Independently checks the worker's evidence against every acceptance criterion.
+      - Refuses to infer permission for the out-of-scope action.
+      - Separates verified evidence, worker claims, unresolved items, and the next action in the final report.
+    must_not:
+      - Claims completion from the worker's report alone.
+      - Performs or authorizes the out-of-scope action without explicit approval.
+
+  - name: Refusal and no response remain blocked
+    given: Native session creation is unavailable, a named alternative is recommended, and the user refuses it or does not respond.
+    must:
+      - Leaves task execution stopped and reports the task as blocked.
+      - Does not start the named alternative or claim completion.
+      - Identifies the missing approval as the next decision needed.
+
+  - name: Low reasoning is forbidden independently of model
+    given: The harness exposes several selectable models and the user attempts to request low reasoning with each of them.
+    must:
+      - Rejects low reasoning for every model, including the documented default model.
+      - Does not substitute another model or reasoning level.
+      - Does not start task execution after rejecting the request.
+
+  - name: Implicit matches are declined
+    given: A routine request matches the skill description, but the user has not explicitly invoked the coordinator or requested delegation.
+    must:
+      - Declines coordinator behavior and leaves the task to the normal workflow.
+      - Does not create or reuse a worker for the implicit request.
+      - Does not begin task-specific investigation through this skill.
