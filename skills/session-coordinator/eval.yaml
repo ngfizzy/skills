@@ -92,3 +92,29 @@ behaviors:
       - Declines coordinator behavior and leaves the task to the normal workflow.
       - Does not create or reuse a worker for the implicit request.
       - Does not begin task-specific investigation through this skill.
+
+  - name: Delegation continuity blocks unowned local task work
+    given: Delegation mode is active, an acceptance criterion remains unfinished, and the current worker is idle with no healthy worker owning the next criterion. The coordinator is ready to inspect a source file locally.
+    must:
+      - Verifies that a healthy worker owns the next unfinished criterion before the local inspection.
+      - Delegates the next owner-sized boundary or stops for explicit consent for a named fallback.
+      - Treats the idle worker as neither an owner nor permission to end delegation mode.
+    must_not:
+      - Performs the local source inspection before the delegation or consent-gated fallback handoff.
+
+  - name: Delegation continuity survives a completed worker checkpoint
+    given: A worker checkpoint reports one acceptance criterion complete and another unfinished, but the worker is now completed and no replacement owns the next criterion. The coordinator is about to run task-specific validation locally.
+    must:
+      - Rechecks worker ownership after the checkpoint and finds no healthy owner for the next unfinished criterion.
+      - Delegates the next boundary or a context-preserving replacement handoff before local validation.
+      - Keeps delegation mode active while the acceptance criterion remains unfinished.
+    must_not:
+      - Performs task-specific validation locally before the next boundary or replacement is delegated.
+
+  - name: Delegation continuity ends only after acceptance criteria are exhausted
+    given: Delegation mode is active, the worker has completed, and the coordinator has independently verified every acceptance criterion with no unfinished work remaining.
+    must:
+      - Confirms that no acceptance criterion remains unfinished before ending delegation mode.
+      - May report completion without creating unnecessary additional work.
+    must_not:
+      - Delegates another boundary solely because the worker completed when no acceptance criterion remains.
