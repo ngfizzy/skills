@@ -45,6 +45,18 @@ For a non-bare invocation:
    is ready.
 4. Assign the complete task boundary and required evidence to that session.
 
+## Scope-identity reuse
+
+Session reuse is scope-identity reuse, not worker-pool reuse. Reuse a native
+session only when the new request continues the same user objective and keeps
+the same owning repository or artifact set, deliverables, approval boundary,
+and lifecycle. A healthy, idle, familiar, or correctly configured worker is
+not by itself reusable. If the request introduces a different objective,
+repository, ticket or spec, deliverable, authorization boundary, or lifecycle,
+create a new native session. Never reuse a session merely to reduce sidebar
+tasks, startup cost, or handoff effort. After its objective completes, treat
+that session as closed to unrelated work.
+
 If native session creation or reuse is unavailable, stop and report that
 task execution cannot continue through the preferred path. Identify the
 closest available alternative that best preserves the requested delegation

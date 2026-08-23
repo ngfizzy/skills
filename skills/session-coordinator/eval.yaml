@@ -118,3 +118,13 @@ behaviors:
       - May report completion without creating unnecessary additional work.
     must_not:
       - Delegates another boundary solely because the worker completed when no acceptance criterion remains.
+
+  - name: Completed objective cannot be reused for unrelated work
+    given: A native worker completed a project-management objective in one repository with its ticket/spec artifacts and deliverables. The worker is healthy, idle, familiar, and correctly configured. A new request asks for an unrelated skill implementation in another repository with a different artifact set, deliverable, approval boundary, and lifecycle.
+    must:
+      - Creates a new native session for the unrelated skill implementation.
+      - Requires continuation of the same user objective with the same owning repository or artifact set, deliverables, approval boundary, and lifecycle before reusing a session.
+      - Treats worker health, idleness, familiarity, and configuration correctness as insufficient reasons to reuse a session.
+      - Treats the completed session as closed to unrelated work.
+    must_not:
+      - Reuses the completed project-management worker merely because it is healthy, idle, familiar, or correctly configured.
