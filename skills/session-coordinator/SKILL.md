@@ -57,6 +57,28 @@ respond, leave the task stopped and report it as blocked. After approval, use
 only the approved alternative within the approved boundary and report the
 degradation honestly; do not broaden the fallback.
 
+## Delegation continuity invariant
+
+Once delegation mode begins and any acceptance criterion remains unfinished,
+the coordinator must maintain a healthy worker owner for the next unfinished
+criterion.
+
+Before every task-specific action and after every worker checkpoint, verify
+that a healthy worker owns that next unfinished criterion. Task-specific
+actions include local investigation, implementation, writing, commands,
+testing, review, and other work that advances the delegated task.
+
+If no healthy worker owns the next unfinished criterion, create or reuse a
+native session and delegate the next owner-sized boundary. If that native path
+is unavailable, stop and obtain explicit consent for a named fallback before
+performing task work through it. An idle or completed worker is not a healthy
+owner and does not end delegation mode while acceptance criteria remain.
+
+The coordinator must delegate the next boundary or a context-preserving
+replacement handoff before any local task action. Do not silently resume task
+work or stop delegating because the current worker is idle, completed, or has
+reported no further work.
+
 ## Model and reasoning selection
 
 When the invocation supplies no model or reasoning override, use
