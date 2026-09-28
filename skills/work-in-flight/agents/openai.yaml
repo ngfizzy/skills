@@ -1,0 +1,6 @@
+interface:
+  display_name: "Work in Flight"
+  short_description: "Catch up on requests, artifacts, and remaining work"
+  default_prompt: "Use $work-in-flight to summarize my unfinished work with artifact links, remaining actions, and current statuses."
+policy:
+  allow_implicit_invocation: true

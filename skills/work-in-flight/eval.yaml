@@ -1,0 +1,36 @@
+skill: work-in-flight
+
+requires: []
+
+triggers:
+  should_load:
+    - situation: What work did I leave unfinished across my projects?
+      because: The user wants a catch-up on existing requests and their status.
+    - situation: Catch me up on active requests, their artifacts, and what remains.
+      because: The user wants a work-in-flight summary.
+  should_not_load:
+    - situation: Start implementing the next ready ticket.
+      because: The user requests execution, not a catch-up summary.
+    - situation: Review this pull request for correctness and missing tests.
+      because: The user requests code review, not a work-in-flight summary.
+    - situation: Plan a new project from scratch.
+      because: There is no existing work to reconstruct.
+
+behaviors:
+  - name: Prefer recorded status
+    given: Two active requests have linked tickets with recorded statuses and different next actions.
+    must:
+      - Reports each request separately with its ticket link, recorded status, and next action.
+      - Does not collapse distinct deliverables into one status.
+  - name: Label inferred status
+    given: A request has a local draft and no accessible project-management status.
+    must:
+      - Labels the status as inferred from the available evidence.
+      - Identifies the local artifact and its remaining action.
+    must_not:
+      - Presents the inferred status as a recorded status.
+  - name: Keep summary read-only
+    given: The user asks only what is in flight, and a linked pull request is open.
+    must:
+      - Distinguishes passing tests from merged or delivered work.
+      - Leaves the pull request and local files unchanged.
