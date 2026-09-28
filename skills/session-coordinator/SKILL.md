@@ -7,191 +7,106 @@ metadata:
 
 # Session Coordinator
 
-Use this skill when a coordinator should delegate execution but remain
-accountable for the objective, sequencing, evidence, quality gate, and final
-report. A worker owns task-specific execution; the coordinator owns
-orchestration.
+Use this skill only when the user explicitly invokes it or requests delegation.
+If the user invokes this skill without a task, settings, or question,
+acknowledge coordinator mode without asking questions, creating a worker, or
+investigating a task.
 
-Do not activate this skill for an implicit match. If the user has not
-explicitly invoked the coordinator or requested delegation, decline coordinator
-behavior and leave the task to the normal workflow.
+The coordinator owns scope, sequencing, worker lifecycle, approvals, evidence
+judgment, and the final report. For any task size, delegate requested research,
+implementation, writing, testing, and review to a native session. Do not do
+that work locally. The coordinator may inspect worker reports and artifacts to
+judge their evidence.
 
-## Invocation contract
+## Host feature examples
 
-An explicit invocation with a task or configuration always enters delegation
-mode. When a healthy native session can be created or reused, native-session
-delegation is mandatory: the coordinator delegates every requested research,
-implementation, writing, testing, and review action to that session and does
-not perform those actions itself. There is no simple-task exception. The sole
-exception is the consent-gated native-unavailable path below: after explicit
-user approval, the coordinator may use only the specifically recommended
-alternative, including direct execution, a native subagent, an external
-worker, or a CLI worker, within the approved boundary. No fallback is silent or
-inferred.
+These documented features are examples, not proof that a tool is enabled in the
+current host. Discover callable tools before choosing a delegation path. A UI
+that shows parallel sessions does not by itself let an agent create or address
+another session.
 
-A bare invocation with no task or configuration only acknowledges coordinator
-mode. It asks no question, starts or reuses no worker, and performs no task
-investigation.
+| Surface | Documented feature |
+| ------- | ------------------ |
+| [Codex desktop](https://learn.chatgpt.com/docs/environments/git-worktrees) | Parallel chats in worktrees; background threads are documented in the [changelog](https://learn.chatgpt.com/docs/changelog). |
+| [Codex CLI](https://learn.chatgpt.com/docs/agent-configuration/subagents) | Subagent threads, inspectable with `/agent`. |
+| [Copilot in VS Code](https://docs.github.com/en/copilot/how-tos/chat-with-copilot/chat-in-ide) | `runSubagent` creates an isolated child within the chat. |
+| [Copilot CLI](https://docs.github.com/en/copilot/how-tos/copilot-cli/use-copilot-cli/work-with-multiple-sessions) | Multiple CLI sessions; [`task` and `/fleet`](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference) run subagents. |
+| [Copilot app](https://docs.github.com/en/copilot/how-tos/github-copilot-app/agent-sessions) | Parallel isolated sessions. |
+| [Claude Code desktop](https://code.claude.com/docs/en/desktop) | Parallel Code-tab sessions, cross-session messaging, and in-session subagents. |
+| [Claude Code CLI](https://code.claude.com/docs/en/sub-agents) | Subagents and conversation forks within a session. |
+| [OpenCode TUI](https://opencode.ai/docs/agents) | Subagents create navigable child sessions. |
 
-For a non-bare invocation:
+## Start and assign
 
-1. Discover the harness's documented native session/thread and model
-   capabilities. Do not infer a capability, command, or model identifier.
-2. Validate the model and reasoning selection against the discovered
-   capabilities.
-3. Create or reuse a related healthy native session before any task-specific
-   investigation. Do not inspect task sources, reproduce behavior, design a
-   solution, write artifacts, run tests, or review the task before that session
-   is ready.
-4. Assign the complete task boundary and required evidence to that session.
+1. Discover the host's callable session, model, and reasoning capabilities.
+   Select and validate the model as described below before task investigation.
+2. Create or reuse a healthy native session before inspecting task sources or
+   running task commands. Give it a specific assignment: objective,
+   acceptance criteria, constraints, permitted side effects, expected artifacts,
+   validation, and checkpoint timing.
+3. Reuse a session only for the same user objective, owning repository or
+   artifact set, deliverables, required approvals, and lifecycle. Health,
+   idleness, familiarity, or configuration alone does not justify reuse.
+   Start a new session for unrelated work, including after the old objective
+   completes.
 
-## Scope-identity reuse
+If no native session can be created or reused, stop. Name the closest available
+alternative, explain material differences in context, permissions,
+observability, or cost, and request explicit permission. Use only that approved
+alternative within its approved scope and permissions; refusal or silence
+leaves the task blocked. Alternatives may include a subagent, external or CLI
+worker, or direct execution when appropriate. No fallback is implicit.
 
-Session reuse is scope-identity reuse, not worker-pool reuse. Reuse a native
-session only when the new request continues the same user objective and keeps
-the same owning repository or artifact set, deliverables, approval boundary,
-and lifecycle. A healthy, idle, familiar, or correctly configured worker is
-not by itself reusable. If the request introduces a different objective,
-repository, ticket or spec, deliverable, authorization boundary, or lifecycle,
-create a new native session. Never reuse a session merely to reduce sidebar
-tasks, startup cost, or handoff effort. After its objective completes, treat
-that session as closed to unrelated work.
+## Keep work owned
 
-If native session creation or reuse is unavailable, stop and report that
-task execution cannot continue through the preferred path. Identify the
-closest available alternative that best preserves the requested delegation
-outcome, such as a native subagent, external worker, CLI worker, or direct
-execution when appropriate. State the material differences and limitations,
-including context, permissions, observability, and cost where relevant, then
-ask the user for explicit permission to use the named alternative. No
-alternative may start before that approval. If the user refuses or does not
-respond, leave the task stopped and report it as blocked. After approval, use
-only the approved alternative within the approved boundary and report the
-degradation honestly; do not broaden the fallback.
+Before any task-specific action and after each worker checkpoint, ensure a
+healthy worker owns the next unfinished acceptance criterion. An idle or
+completed worker is not an owner. Delegate the next assignment or a replacement
+handoff before task work continues. If the host's session tool is unavailable,
+request explicit permission as described above. End delegation only after
+every criterion has been independently verified.
 
-## Delegation continuity invariant
+Require checkpoints with status, scope, progress, artifacts, validation, risks,
+and the next action. Treat repeated context loss, contradictions, missed
+criteria, or lack of progress as degradation. Replace the worker through its
+recorded identity, preserving the handoff reason, objective, constraints,
+selected model and path, verified facts, artifacts, unfinished criteria,
+validation, risks, and one precise next action.
 
-Once delegation mode begins and any acceptance criterion remains unfinished,
-the coordinator must maintain a healthy worker owner for the next unfinished
-criterion.
+## Select model and reasoning
 
-Before every task-specific action and after every worker checkpoint, verify
-that a healthy worker owns that next unfinished criterion. Task-specific
-actions include local investigation, implementation, writing, commands,
-testing, review, and other work that advances the delegated task.
+If the host exposes no usable worker models, report that delegation cannot
+start. Do not ask the user to choose from an empty list or create a worker.
 
-If no healthy worker owns the next unfinished criterion, create or reuse a
-native session and delegate the next owner-sized boundary. If that native path
-is unavailable, stop and obtain explicit consent for a named fallback before
-performing task work through it. An idle or completed worker is not a healthy
-owner and does not end delegation mode while acceptance criteria remain.
+When the user first assigns work through this skill, ask them to choose a model
+from the host's available models, unless they already supplied one. Validate
+the choice before creating a worker; do not guess or substitute a model. The
+chosen model remains the session default until the user changes it.
 
-The coordinator must delegate the next boundary or a context-preserving
-replacement handoff before any local task action. Do not silently resume task
-work or stop delegating because the current worker is idle, completed, or has
-reported no further work.
+When the host allows reasoning selection, choose its level for each assignment
+based on that assignment's complexity. Otherwise use the host's available
+setting without claiming to control it. Validate the complete model and
+reasoning pair before delegation.
 
-## Model and reasoning selection
+The user may change the session's model or reasoning choice mid-session. Apply
+the change to subsequent assignments, with user-selected reasoning taking
+precedence over complexity-based selection until changed. A task-specific
+override affects only that worker unless the user says to change the session
+default. If an active worker cannot adopt a validated change, replace it with
+the context-preserving handoff above.
 
-When the invocation supplies no model or reasoning override, use
-`gpt-5.6-luna` with `high` reasoning. Use `max` only for unusually complex or
-high-risk coordination. `low` reasoning is forbidden, including
-`gpt-5.6-luna` with `low`; if the default pair is not exposed, report the
-limitation rather than substituting another pair.
+Keep model and reasoning choices within the current coordinator session. Do not
+save them in durable memory or carry them into a later session.
 
-A model or reasoning override is per-invocation only. Resolve an omitted field
-to the default, then validate the complete pair against the harness
-capabilities before delegation. Reject an unsupported combination without
-substitution or worker execution. Never persist an override; an invocation
-that omits it returns to `gpt-5.6-luna` with `high`.
+## Verify and report
 
-If a validated override applies to ongoing work and the active native session
-cannot change model or reasoning in place, create a replacement native session
-with a context-preserving handoff. Preserve verified facts, artifacts,
-acceptance criteria, validation, risks, and incomplete work; retire or
-supersede the old session through its recorded native identity rather than
-restarting from scratch.
-
-## Coordinator responsibilities
-
-The coordinator owns:
-
-- the objective, acceptance criteria, boundaries, and sequencing;
-- native session creation, reuse, lifecycle, and replacement;
-- bounded checkpoints and required status reports;
-- delegation of independent verification, testing, and review;
-- evidence judgment against the acceptance criteria; and
-- the final report, including uncertainty and the next precise action.
-
-On the native path, the coordinator does not own worker execution. It may
-inspect orchestration reports and produced artifacts for evidence, but
-task-specific investigation, implementation, writing, testing, and review
-remain delegated. On the consented fallback path, it remains accountable for
-the approved boundary and may use only the approved alternative.
-
-## Delegation lifecycle
-
-Give each worker one owner-sized boundary with:
-
-- objective, acceptance criteria, and relevant authoritative context;
-- constraints, non-goals, and allowed side effects;
-- expected files, artifacts, or result shape;
-- validation commands or evidence expected; and
-- checkpoint timing and a completion-report contract.
-
-At bounded checkpoints, require:
-
-```text
-Status: queued | running | blocked | completed
-Scope: what this worker owns
-Progress: what changed since the last checkpoint
-Artifacts: files, links, or result identifiers
-Validation: checks run and their outcomes
-Risks: open questions, failures, or unverified claims
-Next action: the precise next step or handoff needed
-```
-
-Reuse a related healthy native session when its goal, authority, artifacts,
-permissions, and boundary still match. Delegate independent verification to a
-separate native session when it is useful; do not treat the implementation
-worker's report as proof without checking its evidence against the
-requirements.
-
-Treat repeated context loss, contradictory claims, missed acceptance criteria,
-or lack of progress as degradation. Preserve the last verified state and use a
-context-preserving replacement handoff rather than discarding the work.
-
-On normal completion, independently judge the evidence against every acceptance
-criterion. The final report must separate verified evidence from worker claims,
-list unresolved items or uncertainty, and state the precise next action; a
-worker's completion claim alone is not completion evidence.
-
-## Context-preserving handoff
-
-Use this structure when replacing an active session:
-
-```text
-Handoff reason: <stale context | contradiction | blocked capability | no progress | model change>
-User objective: <original outcome>
-Constraints and non-goals: <must preserve>
-Selected model/reasoning: <validated pair for this invocation>
-Delegation path: <native session>
-Verified facts: <evidence, commands, and decisions>
-Current artifacts: <files, links, identifiers, and ownership>
-Incomplete work: <remaining acceptance criteria>
-Validation: <checks passed, failed, or not run>
-Risks and open questions: <unresolved items>
-Exact next action: <one concrete step for the replacement worker>
-```
-
-## Approval and safety gates
+Judge worker evidence against each acceptance criterion; delegate independent
+verification when useful. Separate verified facts from worker claims,
+uncertainty, unresolved work, and the next action in the final report. A
+worker's completion claim alone is not proof.
 
 Preserve approval gates for commits, pushes, pull requests, external writes,
-destructive operations, and billable work. A worker may act only within the
-permissions explicitly granted for its boundary; neither the coordinator nor a
-worker may infer approval.
-
-Keep secrets, tokens, private identifiers, and unnecessary source material out
-of prompts, handoffs, stored configuration, and reports. Do not discard
-unrelated changes or claim to have observed work, validation, or future events
-that were not actually inspected.
+destructive actions, and billable work. Neither coordinator nor worker may
+expand the assigned scope or permissions by inference. Exclude secrets, private
+identifiers, and unnecessary source material from prompts and handoffs;
+preserve unrelated changes and report only work actually observed.
