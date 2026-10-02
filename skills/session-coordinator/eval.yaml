@@ -22,7 +22,7 @@ triggers:
       because: The deliverable and investigation belong to a runtime-documentation workflow unless delegation is explicitly requested.
 
 behaviors:
-  - name: Bare invocation stays inert
+  - name: Invocation without a task stays inert
     given: The user explicitly invokes the session coordinator with no task, configuration, or question.
     must:
       - Acknowledges coordinator mode only.
@@ -30,28 +30,39 @@ behaviors:
       - Performs no task-specific investigation.
 
   - name: Native session comes before task work
-    given: The user explicitly requests a deep task that requires source inspection, testing, and writing while a healthy native session capability is exposed.
+    given: The user explicitly requests a bounded writing task while a healthy native session capability is exposed.
     must:
       - Discovers the documented native capabilities before task-specific investigation.
+      - Treats the host feature matrix as examples and selects only a capability exposed by the current host.
       - Creates or reuses the related native session before inspecting task sources.
-      - Delegates the complete task boundary with acceptance criteria and evidence requirements.
+      - Delegates an assignment with acceptance criteria and evidence requirements.
     must_not:
       - Investigates or writes the task itself before the delegated session is ready.
 
-  - name: Default and override selection are validated
-    given: The user invokes the coordinator once without overrides and once with an unsupported model and reasoning combination.
+  - name: Session model is chosen and reasoning follows complexity
+    given: The user starts a coordinator session without naming a model. The host exposes several models and selectable reasoning levels, and the next assignments differ in complexity.
     must:
-      - Uses the documented default pair when no override is supplied.
-      - Validates the complete override pair against discovered capabilities.
-      - Rejects an unsupported pair without substituting another model or reasoning level.
-      - Keeps a supported override limited to its invocation and restores the default later.
+      - Prompts the user to choose a session model before creating a worker.
+      - Keeps the validated choice as the session model until the user changes it.
+      - Selects reasoning for each assignment based on its complexity when the host allows it.
+      - Validates each complete model and reasoning pair before delegation.
+    must_not:
+      - Chooses a fixed model or reasoning default without the user's model choice and the task's complexity.
+
+  - name: Empty model catalog stops delegation
+    given: The host exposes no usable worker models when the user first assigns coordinator work.
+    must:
+      - Reports that delegation cannot start because no worker model is available.
+      - Leaves worker creation stopped.
+    must_not:
+      - Asks the user to choose from an empty model list or invents a model.
 
   - name: Fallback requires consent and preserves scope
     given: Native session creation is unavailable, a named alternative is recommended, and the user has not yet approved it.
     must:
       - Stops task execution and explains the material limitations of the named alternative.
       - Requests explicit permission before starting the alternative.
-      - Starts only the approved alternative and preserves the original boundary after approval.
+      - Starts only the approved alternative and preserves the original scope and required approvals.
     must_not:
       - Treats silence, a general task request, or the coordinator's preference as fallback approval.
 
@@ -63,7 +74,7 @@ behaviors:
       - Gives the replacement one exact next action and supersedes the old worker through its recorded identity.
 
   - name: Scope and evidence gates remain enforced
-    given: A worker reports completion and proposes a commit or destructive action outside the explicitly delegated boundary.
+    given: A worker reports completion and proposes a commit or destructive action outside its assigned scope or permissions.
     must:
       - Independently checks the worker's evidence against every acceptance criterion.
       - Refuses to infer permission for the out-of-scope action.
@@ -79,12 +90,23 @@ behaviors:
       - Does not start the named alternative or claim completion.
       - Identifies the missing approval as the next decision needed.
 
-  - name: Low reasoning is forbidden independently of model
-    given: The harness exposes several selectable models and the user attempts to request low reasoning with each of them.
+  - name: Mid-session choice changes persist
+    given: The user changes the coordinator session's model and reasoning choice while an active worker cannot change its settings in place.
     must:
-      - Rejects low reasoning for every model, including the documented default model.
-      - Does not substitute another model or reasoning level.
-      - Does not start task execution after rejecting the request.
+      - Validates the new pair against the host's available settings.
+      - Replaces the active worker with a context-preserving handoff.
+      - Applies the user's choice to subsequent assignments until the user changes it.
+      - Keeps a separately stated one-worker override limited to that worker.
+    must_not:
+      - Resets the session choice after a single assignment.
+
+  - name: Session choices do not cross sessions
+    given: A prior coordinator session used a user-selected model and reasoning level; the user starts a new coordinator session without supplying either choice.
+    must:
+      - Discovers the current host choices and asks the user to select a model for the new session.
+      - Chooses reasoning by assignment complexity unless the user selects a level for the new session.
+    must_not:
+      - Reads or writes durable memory to reuse the previous session's choices.
 
   - name: Implicit matches are declined
     given: A routine request matches the skill description, but the user has not explicitly invoked the coordinator or requested delegation.
@@ -97,7 +119,7 @@ behaviors:
     given: Delegation mode is active, an acceptance criterion remains unfinished, and the current worker is idle with no healthy worker owning the next criterion. The coordinator is ready to inspect a source file locally.
     must:
       - Verifies that a healthy worker owns the next unfinished criterion before the local inspection.
-      - Delegates the next owner-sized boundary or stops for explicit consent for a named fallback.
+      - Delegates the next assignment with a clear outcome or stops for explicit consent for a named fallback.
       - Treats the idle worker as neither an owner nor permission to end delegation mode.
     must_not:
       - Performs the local source inspection before the delegation or consent-gated fallback handoff.
@@ -106,10 +128,10 @@ behaviors:
     given: A worker checkpoint reports one acceptance criterion complete and another unfinished, but the worker is now completed and no replacement owns the next criterion. The coordinator is about to run task-specific validation locally.
     must:
       - Rechecks worker ownership after the checkpoint and finds no healthy owner for the next unfinished criterion.
-      - Delegates the next boundary or a context-preserving replacement handoff before local validation.
+      - Delegates the next assignment or a context-preserving replacement handoff before local validation.
       - Keeps delegation mode active while the acceptance criterion remains unfinished.
     must_not:
-      - Performs task-specific validation locally before the next boundary or replacement is delegated.
+      - Performs task-specific validation locally before the next assignment or replacement is delegated.
 
   - name: Delegation continuity ends only after acceptance criteria are exhausted
     given: Delegation mode is active, the worker has completed, and the coordinator has independently verified every acceptance criterion with no unfinished work remaining.
@@ -117,14 +139,14 @@ behaviors:
       - Confirms that no acceptance criterion remains unfinished before ending delegation mode.
       - May report completion without creating unnecessary additional work.
     must_not:
-      - Delegates another boundary solely because the worker completed when no acceptance criterion remains.
+      - Delegates another assignment solely because the worker completed when no acceptance criterion remains.
 
   - name: Completed objective cannot be reused for unrelated work
-    given: A native worker completed a project-management objective in one repository with its ticket/spec artifacts and deliverables. The worker is healthy, idle, familiar, and correctly configured. A new request asks for an unrelated skill implementation in another repository with a different artifact set, deliverable, approval boundary, and lifecycle.
+    given: A worker completed one objective. A new request has a different objective, artifact set, deliverable, required approvals, and lifecycle, while the old worker remains healthy and idle.
     must:
-      - Creates a new native session for the unrelated skill implementation.
-      - Requires continuation of the same user objective with the same owning repository or artifact set, deliverables, approval boundary, and lifecycle before reusing a session.
+      - Creates a new native session for the unrelated request.
+      - Requires continuation of the same user objective with the same owning repository or artifact set, deliverables, required approvals, and lifecycle before reusing a session.
       - Treats worker health, idleness, familiarity, and configuration correctness as insufficient reasons to reuse a session.
       - Treats the completed session as closed to unrelated work.
     must_not:
-      - Reuses the completed project-management worker merely because it is healthy, idle, familiar, or correctly configured.
+      - Reuses the completed worker merely because it is healthy, idle, familiar, or correctly configured.
