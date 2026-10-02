@@ -9,6 +9,7 @@ Personal agent skills, shared for anyone to use.
 | [`better-docs`](skills/better-docs/SKILL.md) | Write technical documentation with direct, precise language. |
 | [`say-what`](skills/say-what/SKILL.md) | Explain a previous response more simply when it did not land. |
 | [`session-coordinator`](skills/session-coordinator/SKILL.md) | Coordinate delegated work through native sessions. |
+| [`work-in-flight`](skills/work-in-flight/SKILL.md) | Catch up on unfinished work, linked artifacts, remaining actions, and statuses. |
 
 ## Install
 
