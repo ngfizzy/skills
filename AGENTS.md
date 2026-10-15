@@ -88,6 +88,16 @@ Skills are installed and relied upon. Before proposing a change:
 4. Update the skill's evaluation in the same change. An evaluation describing
    the previous version is worse than none, because it will pass.
 5. Run `make check` and `make test`.
+6. Run agent-backed behavioral evaluations for only the skills added or
+   modified by the current task, including changes to their references,
+   scripts, assets, or eval definitions. Exclude unrelated local changes.
+   Use the configured behavioral runner against the edited checkout or
+   worktree, explicitly select each changed skill, and run its full case set.
+   A default smoke-test limit must not truncate validation. Record the model,
+   case counts, results, and report locations. A missing runner or eval suite,
+   failed cases, execution or grading errors, or incomplete runs block a
+   passing validation claim. Structural `make evals` checks are not behavioral
+   evidence. Changes outside skill directories do not require live evals.
 
 Renaming a skill changes its installed path and silently strands the old copy
 on every machine that installed it. Treat a rename as a breaking change and say
